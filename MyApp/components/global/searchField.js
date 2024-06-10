@@ -1,18 +1,62 @@
-import Link from "next/link"
-import { useState } from "react"
+import React, { useState } from 'react';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-export default function SearchField () {   
-    const [texto, setTexto] = useState("")
-    return (
-        <div className="bg-white rounded-full">
-        <form className="flex align-middle">
-            <Link href={{ pathname: `/app/search/`, query: {texto: texto}}} passHref>
-                <button type="submit" className="fbg-blue rounded-full cursor-pointer text-white w-10 h-10 flex-0 text-lg">
-                    <i className="fa fa-search"></i>
-                </button>
-            </Link>
-            <input type="text" placeholder="Qual a sua pergunta?" value={texto} onChange={(e) => {setTexto(e.target.value)}} className="p-2 flex-1 bg-white rounded-full outline-none"/>
-        </form>
-        </div>
-    )
+export default function SearchField() {
+  const [texto, setTexto] = useState("");
+  const navigation = useNavigation();
+
+  const handleSearch = () => {
+    navigation.navigate('SearchResults', { texto }); // supondo que você tenha uma tela SearchResults para resultados de pesquisa
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.form}>
+        <TouchableOpacity onPress={handleSearch} style={styles.button}>
+          <Text style={styles.buttonText}>🔍</Text> {/* substituindo o ícone de busca */}
+        </TouchableOpacity>
+        <TextInput
+          style={styles.input}
+          placeholder="Qual a sua pergunta?"
+          value={texto}
+          onChangeText={setTexto}
+        />
+      </View>
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: 'white',
+    borderRadius: 25,
+    padding: 5,
+    margin: 10,
+  },
+  form: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  button: {
+    backgroundColor: 'blue',
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 40,
+    height: 40,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+  },
+  input: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 25,
+    marginLeft: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+});
