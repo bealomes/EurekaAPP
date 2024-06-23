@@ -29,7 +29,7 @@ const LoginScreen = ({ navigation }) => {
         <Text style={styles.checkboxLabel}>Mantenha-me conectado</Text>
       </View>
 
-      <TouchableOpacity style={styles.loginButton}>
+      <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('Profile')} >
         <Text style={styles.loginButtonText}>Entrar</Text>
       </TouchableOpacity>
 
