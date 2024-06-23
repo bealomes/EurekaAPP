@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, CheckBox, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import icon from './../assets/eureka-icon.png'
 
-const LoginScreen = ({ navigation }) => {
+const RegisterScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -12,29 +12,29 @@ const LoginScreen = ({ navigation }) => {
         <Image source={icon} style={styles.lightBulb} />
       </View>
 
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>Cadastro</Text>
 
-      <Text style={styles.label}>Email</Text>
-      <TextInput style={styles.input} keyboardType="email-address" />
+      <Text style={styles.label}>Nome</Text>
+      <TextInput style={styles.input} />
 
       <Text style={styles.label}>Senha</Text>
       <TextInput style={styles.input} secureTextEntry />
 
-      <TouchableOpacity>
-        <Text style={styles.forgotPassword}>Esqueci minha senha</Text>
+      <Text style={styles.label}>Universidade</Text>
+      <TextInput style={styles.input} />
+
+      <Text style={styles.label}>Curso</Text>
+      <TextInput style={styles.input} />
+
+      <Text style={styles.label}>Ano de ingresso</Text>
+      <TextInput style={styles.input} keyboardType="numeric" />
+
+      <TouchableOpacity style={styles.registerButton}>
+        <Text style={styles.registerButtonText}>Quase lá! Continuar</Text>
       </TouchableOpacity>
 
-      <View style={styles.checkboxContainer}>
-        <CheckBox value={false} />
-        <Text style={styles.checkboxLabel}>Mantenha-me conectado</Text>
-      </View>
-
-      <TouchableOpacity style={styles.loginButton}>
-        <Text style={styles.loginButtonText}>Entrar</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
-        <Text style={styles.registerLink}>Não tem uma conta? Cadastro</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.loginLink}>Já tem uma conta? Login</Text>
       </TouchableOpacity>
     </View>
   );
@@ -83,33 +83,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 20,
   },
-  forgotPassword: {
-    color: '#3b82f6',
-    marginBottom: 20,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  checkboxLabel: {
-    marginLeft: 8,
-  },
-  loginButton: {
+  registerButton: {
     backgroundColor: '#3b82f6',
     borderRadius: 10,
     paddingVertical: 15,
     alignItems: 'center',
     marginBottom: 20,
   },
-  loginButtonText: {
+  registerButtonText: {
     color: '#fff',
     fontSize: 18,
   },
-  registerLink: {
+  loginLink: {
     color: '#3b82f6',
     textAlign: 'center',
   },
 });
 
-export default LoginScreen;
+export default RegisterScreen;
