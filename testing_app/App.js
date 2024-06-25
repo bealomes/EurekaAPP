@@ -6,10 +6,16 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Login from './components/Login';
 import Cadastro from './components/Cadastro';
 import Profile from './components/Profile';
+import Filler from './components/databasefiller';
+import { fill_database } from './components/databasefiller';
 
 const Stack = createNativeStackNavigator();
 
 function App() {
+
+  fill_database();
+
+
   return (
     <NavigationContainer>
       <Stack.Navigator>

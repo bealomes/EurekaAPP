@@ -1,5 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export const wipeDatabase = async () => {
+    try {
+        await AsyncStorage.clear();
+        await AsyncStorage.setItem('ID:QUESTIONS', '0');
+        await AsyncStorage.setItem('ID:ANSWERS', '0');
+        await AsyncStorage.setItem('LIKES:ID:QUESTIONS', '0');
+        await AsyncStorage.setItem('LIKES:ID:ANSWERS', '0');
+    } catch (error) {
+        console.error('Failed to wipe database', error);
+    }
+};
+
 //!LOGGED USER
 
 /** Gets the logged user from the storage
@@ -103,30 +115,30 @@ export const setUser = async (email, user) => {
  * 
  * @returns next question ID
  */
-const getNextQuestionId = async () => {
-  try {
-    const id = await AsyncStorage.getItem('QUESTIONS:ID');
-    return id ? JSON.parse(id) : 1;
-  } catch (error) {
-    console.error('Failed to get next question ID', error);
-    return 1;
-  }
+const getNextId = async (id) => {
+    try {
+        const value = await AsyncStorage.getItem(id);
+        return value ? JSON.parse(value) : 0;
+    } catch (error) {
+        console.error('Failed to get ID', error);
+        return 1;
+    }
 };
 
 /** Increments and returns the next question ID
  * 
  * @returns next question ID
  */
-const incrementNextQuestionId = async () => {
-  try {
-    const currentId = await getNextQuestionId();
-    const nextId = currentId + 1;
-    await AsyncStorage.setItem('QUESTIONS:ID', JSON.stringify(nextId));
-    return nextId;
-  } catch (error) {
-    console.error('Failed to increment question ID', error);
-    return 1;
-  }
+const incrementId = async (id) => {
+    try {
+        const currentId = await getNextId(id);
+        const nextId = currentId + 1;
+        await AsyncStorage.setItem(id, JSON.stringify(nextId));
+        return nextId;
+    } catch (error) {
+        console.error('Failed to increment question ID', error);
+        return 1;
+    }
 };
 
 /** Gets the question from the storage
@@ -135,6 +147,7 @@ const incrementNextQuestionId = async () => {
  * @returns question = {
  *   user: '',
  *   time: '',
+ *   title: '',
  *   content: '',
  *   tag: '',
  *   likes: '',
@@ -150,11 +163,31 @@ export const getQuestion = async (id) => {
   }
 };
 
+/** Gets all questions with user as the author
+ * 
+ * @param {*} user as user ID
+ * @returns questions = [{}]
+ */
+export const getQuestionsByUser = async (user) => {
+    console.log("Getting questions from %s", user);
+    try {
+        const keys = await AsyncStorage.getAllKeys();
+        const questions = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('QUESTIONS:')))
+        const result = questions.map(([key, value]) => JSON.parse(value)).filter(question => question.user === user);
+        console.log(result);
+        return result;
+    } catch (error) {
+        console.error('Failed to get questions by user', error);
+        return [];
+    }
+};
+
 /** Sets the question in the storage
  * 
  * @param {*} question = {
  *   user: '',
  *   time: '',
+ *   title: '',
  *   content: '',
  *   tag: '',
  *   likes: '',
@@ -163,7 +196,7 @@ export const getQuestion = async (id) => {
  */
 export const setQuestion = async (question) => {
   try {
-    const id = await incrementNextQuestionId();
+    const id = await incrementId('ID:QUESTIONS');
     await AsyncStorage.setItem(`QUESTIONS:${id}`, JSON.stringify({ id, ...question }));
     return id;
   } catch (error) {
@@ -174,34 +207,20 @@ export const setQuestion = async (question) => {
 
 //!RESPOSTAS
 
-/** Gets the next answer ID from the storage
+/** Get all answers from an user
  * 
- * @returns next answer ID
+ * @param {*} user as user ID
+ * @returns answers = [{}]
  */
-const getNextAnswerId = async () => {
-  try {
-    const id = await AsyncStorage.getItem('ANSWERS:ID');
-    return id ? JSON.parse(id) : 1;
-  } catch (error) {
-    console.error('Failed to get next answer ID', error);
-    return 1;
-  }
-};
-
-/** Increments and returns the next answer ID
- * 
- * @returns next answer ID
- */
-const incrementNextAnswerId = async () => {
-  try {
-    const currentId = await getNextAnswerId();
-    const nextId = currentId + 1;
-    await AsyncStorage.setItem('ANSWERS:ID', JSON.stringify(nextId));
-    return nextId;
-  } catch (error) {
-    console.error('Failed to increment answer ID', error);
-    return 1;
-  }
+export const getAnswersByUser = async (user) => {
+    try {
+        const keys = await AsyncStorage.getAllKeys();
+        const answers = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('ANSWERS:')))
+        return answers.map(([key, value]) => JSON.parse(value)).filter(answer => answer.user === user);
+    } catch (error) {
+        console.error('Failed to get answers by user', error);
+        return [];
+    }
 };
 
 /** Gets the answer from the storage
@@ -238,7 +257,7 @@ export const getAnswer = async (id) => {
  */
 export const setAnswer = async (answer) => {
   try {
-    const id = await incrementNextAnswerId();
+    const id = await incrementId('ID:ANSWERS');
     await AsyncStorage.setItem(`ANSWERS:${id}`, JSON.stringify({ id, ...answer }));
     return id;
   } catch (error) {
@@ -248,36 +267,6 @@ export const setAnswer = async (answer) => {
 };
 
 //!CURTIDAS_PERGUNTAS
-
-/** Gets the next question like ID from the storage
- * 
- * @returns next question like ID
- */
-const getNextQuestionLikeId = async () => {
-  try {
-    const id = await AsyncStorage.getItem('LIKES:QUESTIONS:ID');
-    return id ? JSON.parse(id) : 1;
-  } catch (error) {
-    console.error('Failed to get next question like ID', error);
-    return 1;
-  }
-};
-
-/** Increments and returns the next question like ID
- * 
- * @returns next question like ID
- */
-const incrementNextQuestionLikeId = async () => {
-  try {
-    const currentId = await getNextQuestionLikeId();
-    const nextId = currentId + 1;
-    await AsyncStorage.setItem('LIKES:QUESTIONS:ID', JSON.stringify(nextId));
-    return nextId;
-  } catch (error) {
-    console.error('Failed to increment question like ID', error);
-    return 1;
-  }
-};
 
 /** Gets the question likes from the storage
  * 
@@ -307,7 +296,7 @@ export const getQuestionLikes = async (id) => {
  */
 export const setQuestionLikes = async (likes) => {
   try {
-    const id = await incrementNextQuestionLikeId();
+    const id = await incrementId('LIKES:ID:QUESTIONS');
     await AsyncStorage.setItem(`LIKES:QUESTIONS:${id}`, JSON.stringify({ id, ...likes }));
     return id;
   } catch (error) {
@@ -317,37 +306,6 @@ export const setQuestionLikes = async (likes) => {
 };
 
 //!CURTIDAS_RESPOSTAS
-
-/** Gets the next answer like ID from the storage
- * 
- * @returns next answer like ID
- */
-const getNextAnswerLikeId = async () => {
-  try {
-    const id = await AsyncStorage.getItem('LIKES:ANSWERS:ID');
-    return id ? JSON.parse(id) : 1;
-  } catch (error) {
-    console.error('Failed to get next answer like ID', error);
-    return 1;
-  }
-};
-
-/** Increments and returns the next answer like ID
- * 
- * @returns next answer like ID
- */
-const incrementNextAnswerLikeId = async () => {
-  try {
-    const currentId = await getNextAnswerLikeId();
-    const nextId = currentId + 1;
-    await AsyncStorage.setItem('LIKES:ANSWERS:ID', JSON.stringify(nextId));
-    return nextId;
-  } catch (error) {
-    console.error('Failed to increment answer like ID', error);
-    return 1;
-  }
-};
-
 /** Gets the answer likes from the storage
  * 
  * @param {*} id as answer like ID
@@ -376,7 +334,7 @@ export const getAnswerLikes = async (id) => {
  */
 export const setAnswerLikes = async (likes) => {
   try {
-    const id = await incrementNextAnswerLikeId();
+    const id = await incrementId('LIKES:ID:ANSWERS');
     await AsyncStorage.setItem(`LIKES:ANSWERS:${id}`, JSON.stringify({ id, ...likes }));
     return id;
   } catch (error) {

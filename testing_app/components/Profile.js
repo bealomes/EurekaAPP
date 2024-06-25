@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
 import icon from './../assets/eureka-icon.png';
 import user_temp from './../assets/user_icon.png';
-import { getLoggedUser, removeLoggedUser } from './databases'; // Importando a função do Database.js
+import { getLoggedUser, removeLoggedUser, getAnswersByUser, getQuestionsByUser } from './databases'; // Importando as funções do Database.js
 
 const ProfileScreen = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState('Perguntas');
   const [user, setUser] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState([]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -14,6 +16,13 @@ const ProfileScreen = ({ navigation }) => {
         const userData = await getLoggedUser();
         if (userData) {
           setUser(userData);
+          const userQuestions = await getQuestionsByUser(userData.email);
+          console.log(userQuestions);
+          const userAnswers = await getAnswersByUser(userData.email);
+          console.log(userAnswers);
+
+          setQuestions(userQuestions);
+          setAnswers(userAnswers);
         }
       } catch (error) {
         console.error('Failed to load user from storage', error);
@@ -32,10 +41,9 @@ const ProfileScreen = ({ navigation }) => {
     );
   }
 
-  //logout user
   const logout = async () => {
     console.log("trying to logout");
-    removeLoggedUser();
+    await removeLoggedUser();
     navigation.navigate('Login');
   };
 
@@ -75,40 +83,38 @@ const ProfileScreen = ({ navigation }) => {
       <ScrollView style={styles.content}>
         {selectedTab === 'Perguntas' && (
           <View>
-            <View style={styles.post}>
-              <Text style={styles.postUser}>Usuário 1</Text>
-              <Text style={styles.postTime}>Há 20 segundos</Text>
-              <Text style={styles.postContent}>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam interdum felis dorcepas coisores...
-              </Text>
-              <Text style={styles.postTag}>#geometriaanaltica</Text>
-            </View>
-            <View style={styles.post}>
-              <Text style={styles.postUser}>Usuário 1</Text>
-              <Text style={styles.postTime}>Há 20 segundos</Text>
-              <Text style={styles.postContent}>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam interdum felis dorcepas coisores...
-              </Text>
-              <Text style={styles.postTag}>#geometriaanaltica</Text>
-            </View>
+            {questions.map((question, index) => (
+              <TouchableOpacity key={index} style={styles.post} onPress={() => navigation.navigate('Question', { questionId: question.id })}>
+                <Text style={styles.postUser}>{question.user}</Text>
+                <Text style={styles.postTime}>{question.time}</Text>
+                <Text style={styles.postContent}>{question.content}</Text>
+                <Text style={styles.postTag}>{question.tag}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
         {selectedTab === 'Respostas' && (
           <View>
-            {/* Add responses content here */}
+            {answers.map((answer, index) => (
+              <TouchableOpacity key={index} style={styles.post} onPress={() => navigation.navigate('Question', { questionId: answer.question })}>
+                <Text style={styles.postUser}>{answer.user}</Text>
+                <Text style={styles.postTime}>{answer.time}</Text>
+                <Text style={styles.postContent}>{answer.content}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
           <Text style={styles.footerIcon}>🏠</Text>
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Questions')}>
           <Text style={styles.footerIcon}>❓</Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Text style={styles.footerIcon}>👤</Text>
+          <Text style={[styles.footerIcon, styles.activeFooterIcon]}>👤</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -216,6 +222,9 @@ const styles = StyleSheet.create({
   footerIcon: {
     fontSize: 24,
     color: '#6b7280',
+  },
+  activeFooterIcon: {
+    color: '#1d4ed8',
   },
 });
 
