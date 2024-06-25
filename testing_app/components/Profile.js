@@ -100,7 +100,7 @@ const ProfileScreen = ({ navigation }) => {
         )}
       </ScrollView>
 
-      <View style={styles.footer}>
+      {/* <View style={styles.footer}>
         <TouchableOpacity>
           <Text style={styles.footerIcon}>🏠</Text>
         </TouchableOpacity>
@@ -110,7 +110,7 @@ const ProfileScreen = ({ navigation }) => {
         <TouchableOpacity>
           <Text style={styles.footerIcon}>👤</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 };

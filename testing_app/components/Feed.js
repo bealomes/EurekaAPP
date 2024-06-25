@@ -52,11 +52,11 @@ const FeedScreen = () => {
         renderItem={({ item }) => <PostItem {...item} />}
         keyExtractor={item => item.id}
       />
-      <View style={styles.footer}>
+      {/* <View style={styles.footer}>
         <TouchableOpacity><Icon name="home" size={30} color="#000" /></TouchableOpacity>
         <TouchableOpacity onPress={toggleModal}><Icon name="help-circle" size={30} color="#000" /></TouchableOpacity>
         <TouchableOpacity><Icon name="person" size={30} color="#000" /></TouchableOpacity>
-      </View>
+      </View> */}
       <Modal
         transparent={true}
         visible={isModalVisible}
