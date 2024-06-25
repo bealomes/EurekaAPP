@@ -1,4 +1,4 @@
-import { setUser, setLoggedUser, setQuestion, wipeDatabase } from './databases';
+import { setUser, setLoggedUser, setQuestion, wipeDatabase, setAnswer } from './databases';
 
 export const fill_database = async () => {
     try {
@@ -51,19 +51,37 @@ export const fill_database = async () => {
         await setUser(lucas.email, lucas);
 
         //!perguntas
-        const pergunta = {
+        const pergunta1 = {
             user: 'rzzgame@usp.br',
-            time: '',
+            time: '2024-06-25-18-47-21',
             title: 'Como fazer um app em React Native?',
             content: 'Estou tentando fazer um app em React Native, mas não estou conseguindo. Alguém pode me ajudar?',
             tags: ['React Native', 'App'],
             likes: 0,
         };
-        await setQuestion(pergunta);
+        await setQuestion(pergunta1);
+
+        const resposta1pergunta1 = {
+            question: '1',
+            user: 'lucasegp@usp.br',
+            time: '2024-06-25-19-47-21',
+            content: 'Você pode seguir o tutorial do React Native, é bem simples e fácil de entender.',
+            likes: 0,
+        };
+        await setAnswer(resposta1pergunta1);
+
+        const resposta2pergunta1 = {
+            question: '1',
+            user: 'bealomes@usp.br',
+            time: '2024-06-25-20-47-21',
+            content: 'Você pode acompanhar as aulas da Professora Lina Maria.',
+            likes: 0,
+        };
+        await setAnswer(resposta2pergunta1);
 
         const pergunta2 = {
             user: 'bealomes@usp.br',
-            time: '',
+            time: '2024-06-25-17-47-01',
             title: 'O que é um algoritmo?',
             content: 'Estou com dificuldades em entender o que é um algoritmo, alguém pode me ajudar?',
             tags: ['Algoritmo'],
@@ -73,13 +91,23 @@ export const fill_database = async () => {
 
         const pergunta3 = {
             user: 'bealomes@usp.br',
-            time: '',
+            time: '2024-06-26-13-12-21-29',
             title: 'Como fazer um algoritmo?',
             content: 'Estou com dificuldades em fazer um algoritmo, alguém pode me ajudar?',
             tags: ['Algoritmo'],
             likes: 0,
         };
         await setQuestion(pergunta3);
+
+        const pergunta4 = {
+            user: 'bealomes@usp.br',
+            time: '2024-06-28-08-12-21-29',
+            title: 'Como testar um algoritmo?',
+            content: 'Estou com dificuldades em testar um algoritmo, alguém pode me ajudar?',
+            tags: ['Algoritmo'],
+            likes: 0,
+        };
+        await setQuestion(pergunta4);
 
         console.log("Setting user Beatriz");
         await setLoggedUser(beatriz);

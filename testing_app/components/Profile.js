@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
 import icon from './../assets/eureka-icon.png';
 import user_temp from './../assets/user_icon.png';
-import { getLoggedUser, removeLoggedUser, getAnswersByUser, getQuestionsByUser } from './databases'; // Importando as funções do Database.js
+import { getLoggedUser, removeLoggedUser, getAnswersByUser, getQuestionsByUser, getQuestion } from './databases'; // Importando as funções do Database.js
 
 const ProfileScreen = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState('Perguntas');
@@ -21,8 +21,13 @@ const ProfileScreen = ({ navigation }) => {
           const userAnswers = await getAnswersByUser(userData.email);
           console.log(userAnswers);
 
+          const detailedAnswers = await Promise.all(userAnswers.map(async (answer) => {
+            const question = await getQuestion(answer.question);
+            return { ...answer, questionTitle: question.title };
+          }));
+
+          setAnswers(detailedAnswers);
           setQuestions(userQuestions);
-          setAnswers(userAnswers);
         }
       } catch (error) {
         console.error('Failed to load user from storage', error);
@@ -40,6 +45,33 @@ const ProfileScreen = ({ navigation }) => {
       </View>
     );
   }
+
+  const renderQuestions = () => (
+    <View>
+      {questions.map((question, index) => (
+        <TouchableOpacity key={index} style={styles.post} onPress={() => navigation.navigate('Question', { questionId: question.id })}>
+          <Text style={styles.postTitle}>{question.title}</Text>
+          <Text style={styles.postContent}>{question.content.slice(0, 100)}...</Text>
+          <Text style={styles.postTime}>{question.time}</Text>
+          <Text style={styles.postLikes}>Curtidas: {question.likes}</Text>
+          <Text style={styles.postTag}>{question.tags.join(', ')}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderAnswers = () => (
+    <View>
+      {answers.map((answer, index) => (
+        <TouchableOpacity key={index} style={styles.post} onPress={() => navigation.navigate('Question', { questionId: answer.question })}>
+          <Text style={styles.postTitle}>{answer.questionTitle}</Text>
+          <Text style={styles.postContent}>{answer.content.slice(0, 100)}...</Text>
+          <Text style={styles.postTime}>{answer.time}</Text>
+          <Text style={styles.postLikes}>Curtidas: {answer.likes}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
 
   const logout = async () => {
     console.log("trying to logout");
@@ -80,30 +112,9 @@ const ProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
-        {selectedTab === 'Perguntas' && (
-          <View>
-            {questions.map((question, index) => (
-              <TouchableOpacity key={index} style={styles.post} onPress={() => navigation.navigate('Question', { questionId: question.id })}>
-                <Text style={styles.postUser}>{question.user}</Text>
-                <Text style={styles.postTime}>{question.time}</Text>
-                <Text style={styles.postContent}>{question.content}</Text>
-                <Text style={styles.postTag}>{question.tag}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-        {selectedTab === 'Respostas' && (
-          <View>
-            {answers.map((answer, index) => (
-              <TouchableOpacity key={index} style={styles.post} onPress={() => navigation.navigate('Question', { questionId: answer.question })}>
-                <Text style={styles.postUser}>{answer.user}</Text>
-                <Text style={styles.postTime}>{answer.time}</Text>
-                <Text style={styles.postContent}>{answer.content}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContentContainer}>
+        {selectedTab === 'Perguntas' && renderQuestions()}
+        {selectedTab === 'Respostas' && renderAnswers()}
       </ScrollView>
 
       {/* <View style={styles.footer}>
@@ -188,24 +199,38 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
   },
+  scrollContentContainer: {
+    paddingBottom: 120, // Ajuste o valor conforme necessário para garantir que o último item não seja escondido
+  },
   post: {
     marginBottom: 20,
     padding: 15,
     borderRadius: 10,
     backgroundColor: '#f3f4f6',
   },
-  postUser: {
+  postTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  postContent: {
+    fontSize: 14,
+    marginBottom: 5,
   },
   postTime: {
     fontSize: 12,
     color: '#9ca3af',
-    marginBottom: 10,
+    marginBottom: 5,
   },
-  postContent: {
+  postUser: {
     fontSize: 14,
-    marginBottom: 10,
+    color: '#6b7280',
+    marginBottom: 5,
+  },
+  postLikes: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginBottom: 5,
   },
   postTag: {
     fontSize: 12,
