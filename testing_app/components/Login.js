@@ -1,8 +1,46 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, CheckBox, StyleSheet, Image } from 'react-native';
-import icon from './../assets/eureka-icon.png'
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import icon from './../assets/eureka-icon.png';
+import { getUser, setLoggedUser, getLoggedUser } from './databases'; // Importando as funções do Database.js
 
 const LoginScreen = ({ navigation }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      const user = await getUser(email);
+      if (user !== null) {
+        if (user.senha === password) {
+          // Set user in async storage as logged in
+          await setLoggedUser(user);
+          navigation.navigate('Feed', { screen: 'Profile', params: { user } });
+        } else {
+          Alert.alert('Erro', 'Senha incorreta');
+        }
+      } else {
+        Alert.alert('Erro', 'Usuário não encontrado');
+      }
+    } catch (error) {
+      console.error('Failed to fetch the user from storage', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao fazer login');
+    }
+  };
+
+  const checkLoggedIn = async () => {
+    try{
+      const user = await getLoggedUser();
+      if (user !== null) {
+        navigation.navigate('Feed', { screen: 'Feed', params: { user } });
+      }
+    } catch (error) {
+      console.error('Failed to fetch the user from storage', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao fazer login');
+    }
+  }
+
+  checkLoggedIn();
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -15,21 +53,26 @@ const LoginScreen = ({ navigation }) => {
       <Text style={styles.title}>Login</Text>
 
       <Text style={styles.label}>Email</Text>
-      <TextInput style={styles.input} keyboardType="email-address" />
+      <TextInput
+        style={styles.input}
+        keyboardType="email-address"
+        value={email}
+        onChangeText={setEmail}
+      />
 
       <Text style={styles.label}>Senha</Text>
-      <TextInput style={styles.input} secureTextEntry />
+      <TextInput
+        style={styles.input}
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+      />
 
       <TouchableOpacity>
         <Text style={styles.forgotPassword}>Esqueci minha senha</Text>
       </TouchableOpacity>
 
-      <View style={styles.checkboxContainer}>
-        <CheckBox value={false} />
-        <Text style={styles.checkboxLabel}>Mantenha-me conectado</Text>
-      </View>
-
-      <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('Profile')} >
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Entrar</Text>
       </TouchableOpacity>
 
@@ -86,14 +129,6 @@ const styles = StyleSheet.create({
   forgotPassword: {
     color: '#3b82f6',
     marginBottom: 20,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  checkboxLabel: {
-    marginLeft: 8,
   },
   loginButton: {
     backgroundColor: '#3b82f6',

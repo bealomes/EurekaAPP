@@ -1,22 +1,68 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
+import icon from './../assets/eureka-icon.png';
+import user_temp from './../assets/user_icon.png';
+import { getLoggedUser, removeLoggedUser, getAnswersByUser, getQuestionsByUser } from './databases'; // Importando as funções do Database.js
 
 const ProfileScreen = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState('Perguntas');
+  const [user, setUser] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState([]);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await getLoggedUser();
+        if (userData) {
+          setUser(userData);
+          const userQuestions = await getQuestionsByUser(userData.email);
+          console.log(userQuestions);
+          const userAnswers = await getAnswersByUser(userData.email);
+          console.log(userAnswers);
+
+          setQuestions(userQuestions);
+          setAnswers(userAnswers);
+        }
+      } catch (error) {
+        console.error('Failed to load user from storage', error);
+        Alert.alert('Erro', 'Ocorreu um erro ao carregar os dados do usuário');
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <Text>Carregando...</Text>
+      </View>
+    );
+  }
+
+  const logout = async () => {
+    console.log("trying to logout");
+    await removeLoggedUser();
+    navigation.navigate('Login');
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.backButton} onPress={logout}>
           <Text style={styles.backButtonText}>{'<'}</Text>
         </TouchableOpacity>
-        <Image source={{ uri: 'https://example.com/edit-icon.png' }} style={styles.editButton} />
+        <Image source={icon} style={styles.editButton} />
       </View>
 
       <View style={styles.profile}>
-        <Image url='https://scontent-gru1-1.cdninstagram.com/v/t51.2885-19/395784084_1011340880116777_1477600076027533740_n.jpg?_nc_ht=scontent-gru1-1.cdninstagram.com&_nc_cat=101&_nc_ohc=iquUvpp1qtoQ7kNvgGkNpx_&edm=AEhyXUkBAAAA&ccb=7-5&oh=00_AYA-5caG5Ymj7jb0mHXjWejxRP323NQx1ICgPRxDyT58eQ&oe=667E6696&_nc_sid=cf751b' style={styles.profileImage} />
-        <Text style={styles.profileName}>Matheus Cirillo</Text>
-        <Text style={styles.profileInfo}>USP São Carlos</Text>
+        <Image source={user_temp} style={styles.profileImage} />
+        <Text style={styles.profileName}>{user.name}</Text>
+        <Text style={styles.profileInfo}>{user.faculdade}</Text>
+        <Text style={styles.profileInfo}>{user.curso}</Text>
+        <Text style={styles.profileInfo}>Ano de Ingresso: {user.ano_ingresso}</Text>
+        <Text style={styles.profileInfo}>{user.bio}</Text>
       </View>
 
       <View style={styles.tabs}>
@@ -37,42 +83,40 @@ const ProfileScreen = ({ navigation }) => {
       <ScrollView style={styles.content}>
         {selectedTab === 'Perguntas' && (
           <View>
-            <View style={styles.post}>
-              <Text style={styles.postUser}>Usuário 1</Text>
-              <Text style={styles.postTime}>Há 20 segundos</Text>
-              <Text style={styles.postContent}>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam interdum felis dorcepas coisores...
-              </Text>
-              <Text style={styles.postTag}>#geometriaanaltica</Text>
-            </View>
-            <View style={styles.post}>
-              <Text style={styles.postUser}>Usuário 1</Text>
-              <Text style={styles.postTime}>Há 20 segundos</Text>
-              <Text style={styles.postContent}>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam interdum felis dorcepas coisores...
-              </Text>
-              <Text style={styles.postTag}>#geometriaanaltica</Text>
-            </View>
+            {questions.map((question, index) => (
+              <TouchableOpacity key={index} style={styles.post} onPress={() => navigation.navigate('Question', { questionId: question.id })}>
+                <Text style={styles.postUser}>{question.user}</Text>
+                <Text style={styles.postTime}>{question.time}</Text>
+                <Text style={styles.postContent}>{question.content}</Text>
+                <Text style={styles.postTag}>{question.tag}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
         {selectedTab === 'Respostas' && (
           <View>
-            {/* Add responses content here */}
+            {answers.map((answer, index) => (
+              <TouchableOpacity key={index} style={styles.post} onPress={() => navigation.navigate('Question', { questionId: answer.question })}>
+                <Text style={styles.postUser}>{answer.user}</Text>
+                <Text style={styles.postTime}>{answer.time}</Text>
+                <Text style={styles.postContent}>{answer.content}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
       </ScrollView>
 
-      <View style={styles.footer}>
+      {/* <View style={styles.footer}>
         <TouchableOpacity>
           <Text style={styles.footerIcon}>🏠</Text>
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Questions')}>
           <Text style={styles.footerIcon}>❓</Text>
         </TouchableOpacity>
         <TouchableOpacity>
-          <Text style={styles.footerIcon}>👤</Text>
+          <Text style={[styles.footerIcon, styles.activeFooterIcon]}>👤</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 };
@@ -178,6 +222,9 @@ const styles = StyleSheet.create({
   footerIcon: {
     fontSize: 24,
     color: '#6b7280',
+  },
+  activeFooterIcon: {
+    color: '#1d4ed8',
   },
 });
 
