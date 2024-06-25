@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, CheckBox, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import icon from './../assets/eureka-icon.png';
 import { getUser, setLoggedUser, getLoggedUser } from './databases'; // Importando as funções do Database.js
 
@@ -14,7 +14,7 @@ const LoginScreen = ({ navigation }) => {
         if (user.senha === password) {
           // Set user in async storage as logged in
           await setLoggedUser(user);
-          navigation.navigate('Profile', { user });
+          navigation.navigate('Feed', { screen: 'Profile', params: { user } });
         } else {
           Alert.alert('Erro', 'Senha incorreta');
         }
@@ -30,9 +30,8 @@ const LoginScreen = ({ navigation }) => {
   const checkLoggedIn = async () => {
     try{
       const user = await getLoggedUser();
-      console.log(user)
       if (user !== null) {
-        navigation.navigate('Profile', { user });
+        navigation.navigate('Feed', { screen: 'Feed', params: { user } });
       }
     } catch (error) {
       console.error('Failed to fetch the user from storage', error);
@@ -130,14 +129,6 @@ const styles = StyleSheet.create({
   forgotPassword: {
     color: '#3b82f6',
     marginBottom: 20,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  checkboxLabel: {
-    marginLeft: 8,
   },
   loginButton: {
     backgroundColor: '#3b82f6',

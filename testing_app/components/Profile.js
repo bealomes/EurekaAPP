@@ -106,8 +106,8 @@ const ProfileScreen = ({ navigation }) => {
         )}
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')}>
+      {/* <View style={styles.footer}>
+        <TouchableOpacity>
           <Text style={styles.footerIcon}>🏠</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Questions')}>
@@ -116,7 +116,7 @@ const ProfileScreen = ({ navigation }) => {
         <TouchableOpacity>
           <Text style={[styles.footerIcon, styles.activeFooterIcon]}>👤</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </View>
   );
 };
