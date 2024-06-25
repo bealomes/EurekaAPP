@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, CheckBox, StyleSheet, Image, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import icon from './../assets/eureka-icon.png';
+import { getUser, setLoggedUser, getLoggedUser } from './databases'; // Importando as funções do Database.js
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -9,13 +9,12 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const user = await AsyncStorage.getItem(`USERS:${email}`);
+      const user = await getUser(email);
       if (user !== null) {
-        const parsedUser = JSON.parse(user);
-        if (parsedUser.senha === password) {
-          //set user in async storage
-          await AsyncStorage.setItem('USER', JSON.stringify(parsedUser));
-          navigation.navigate('Profile', { user: parsedUser });
+        if (user.senha === password) {
+          // Set user in async storage as logged in
+          await setLoggedUser(user);
+          navigation.navigate('Profile', { user });
         } else {
           Alert.alert('Erro', 'Senha incorreta');
         }
@@ -27,6 +26,21 @@ const LoginScreen = ({ navigation }) => {
       Alert.alert('Erro', 'Ocorreu um erro ao fazer login');
     }
   };
+
+  const checkLoggedIn = async () => {
+    try{
+      const user = await getLoggedUser();
+      console.log(user)
+      if (user !== null) {
+        navigation.navigate('Profile', { user });
+      }
+    } catch (error) {
+      console.error('Failed to fetch the user from storage', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao fazer login');
+    }
+  }
+
+  checkLoggedIn();
 
   return (
     <View style={styles.container}>

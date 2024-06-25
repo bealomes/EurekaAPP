@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import icon from './../assets/eureka-icon.png';
+import { getUser, setUser, getLoggedUser } from './databases'; // Importando as funções do Database.js
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -19,18 +19,19 @@ const RegisterScreen = ({ navigation }) => {
       faculdade: university,
       curso: course,
       ano_ingresso: parseInt(year, 10),
-      bio: '',
+      bio,
     };
 
     try {
-      //check if user exists
-      const userExists = await AsyncStorage.getItem(`USERS:${email}`);
+      // Check if user exists
+      const userExists = await getUser(email);
       if (userExists) {
         Alert.alert('Erro', 'Usuário já cadastrado');
         return;
       }
 
-      await AsyncStorage.setItem(`USERS:${email}`, JSON.stringify(user));
+      // Save the new user
+      await setUser(email, user);
       Alert.alert('Sucesso', 'Usuário cadastrado com sucesso');
       navigation.navigate('Login');
     } catch (error) {
@@ -38,6 +39,20 @@ const RegisterScreen = ({ navigation }) => {
       Alert.alert('Erro', 'Ocorreu um erro ao cadastrar o usuário');
     }
   };
+
+  const checkLoggedIn = async () => {
+    try{
+      const user = await getLoggedUser();
+      if (user !== null) {
+        navigation.navigate('Profile', { user });
+      }
+    } catch (error) {
+      console.error('Failed to fetch the user from storage', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao fazer login');
+    }
+  }
+
+  checkLoggedIn();
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
