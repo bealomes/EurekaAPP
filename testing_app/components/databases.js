@@ -252,6 +252,30 @@ export const getAnswersByUser = async (user) => {
   }
 };
 
+/** 
+ * Gets all answers for a specific question from the storage
+ * 
+ * @param {number} questionId - The ID of the question
+ * @returns {Promise<Array>} - The list of answers for the question
+ */
+export const getAnswersByQuestion = async (questionId) => {
+  console.log("Getting answers for question %s", questionId);
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const answers = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('ANSWERS:')));
+    console.log("All answers: %s", answers);
+    const result = answers
+      .map(([key, value]) => JSON.parse(value))
+      .filter(answer => answer.question === questionId)
+      .sort((a, b) => new Date(b.time) - new Date(a.time)); // Ordenar por answer.time
+    console.log(result);
+    return result;
+  } catch (error) {
+    console.error('Failed to get answers by question', error);
+    return [];
+  }
+};
+
 /** Gets the answer from the storage
  * 
  * @param {*} id as answer ID

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { getAllQuestionsFilteredByTag } from './databases';
+import { getAllQuestionsFilteredByTag, getAnswersByQuestion } from './databases';
 
-const PostItem = ({ user, time, title, content, tags, likes }) => (
-  <View style={styles.postContainer}>
+const PostItem = ({ user, time, title, content, tags, likes, onPress }) => (
+  <TouchableOpacity style={styles.postContainer} onPress={onPress}>
     <View style={styles.postHeader}>
       <Icon name="person-circle" size={40} color="#000" />
       <View style={styles.postHeaderText}>
@@ -13,17 +13,13 @@ const PostItem = ({ user, time, title, content, tags, likes }) => (
       </View>
     </View>
     <Text style={styles.postTitle}>{title}</Text>
-    <Text style={styles.postContent}>{content}</Text>
+    <Text style={styles.postContent}>{content.slice(0, 100)}...</Text>
     <Text style={styles.postTags}>{tags.join(', ')}</Text>
     <Text style={styles.postLikes}>Curtidas: {likes}</Text>
-    <TouchableOpacity style={styles.responseButton}>
-      <Icon name="chatbubble-outline" size={20} color="#000" />
-      <Text style={styles.responseText}>Responda</Text>
-    </TouchableOpacity>
-  </View>
+  </TouchableOpacity>
 );
 
-const FeedScreen = () => {
+const FeedScreen = ({ navigation }) => {
   const [questions, setQuestions] = useState([]);
   const [tags, setTags] = useState([]);
   const [selectedTag, setSelectedTag] = useState(null);
@@ -56,6 +52,10 @@ const FeedScreen = () => {
     setModalVisible(!isModalVisible);
   };
 
+  const handleQuestionPress = (questionId) => {
+    navigation.navigate('Question', { questionId });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -84,7 +84,12 @@ const FeedScreen = () => {
       </View>
       <FlatList
         data={questions}
-        renderItem={({ item }) => <PostItem {...item} />}
+        renderItem={({ item }) => (
+          <PostItem
+            {...item}
+            onPress={() => handleQuestionPress(item.id)}
+          />
+        )}
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 90 }}
       />
