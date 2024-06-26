@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { getAllQuestionsFilteredByTag, getAnswersByQuestion } from './databases';
 
-const data = [
-  { id: '1', user: 'Usuário 1', time: 'Há 20 segundos', message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam interdum felis dorcepas coisores...', tag: '#geometriaanalitica' },
-  { id: '2', user: 'Usuário 2', time: 'Há 10 minutos', message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam interdum felis dorcepas coisores...', tag: '#calculo' },
-];
-
-const PostItem = ({ user, time, message, tag }) => (
-  <View style={styles.postContainer}>
+const PostItem = ({ user, time, title, content, tags, likes, onPress }) => (
+  <TouchableOpacity style={styles.postContainer} onPress={onPress}>
     <View style={styles.postHeader}>
       <Icon name="person-circle" size={40} color="#000" />
       <View style={styles.postHeaderText}>
@@ -16,20 +12,48 @@ const PostItem = ({ user, time, message, tag }) => (
         <Text>{time}</Text>
       </View>
     </View>
-    <Text style={styles.postMessage}>{message}</Text>
-    <Text style={styles.postTag}>{tag}</Text>
-    <TouchableOpacity style={styles.responseButton}>
-      <Icon name="chatbubble-outline" size={20} color="#000" />
-      <Text style={styles.responseText}>Responda</Text>
-    </TouchableOpacity>
-  </View>
+    <Text style={styles.postTitle}>{title}</Text>
+    <Text style={styles.postContent}>{content.slice(0, 100)}...</Text>
+    <Text style={styles.postTags}>{tags.join(', ')}</Text>
+    <Text style={styles.postLikes}>Curtidas: {likes}</Text>
+  </TouchableOpacity>
 );
 
-const FeedScreen = () => {
+const FeedScreen = ({ navigation }) => {
+  const [questions, setQuestions] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [selectedTag, setSelectedTag] = useState(null);
   const [isModalVisible, setModalVisible] = useState(false);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [selectedTag]);
+
+  const fetchQuestions = async () => {
+    const questions = await getAllQuestionsFilteredByTag(selectedTag);
+    setQuestions(questions);
+    if (!selectedTag) {
+      extractTags(questions);
+    }
+  };
+
+  const extractTags = (questions) => {
+    const tagCounts = {};
+    questions.forEach(question => {
+      question.tags.forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    });
+    const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).map(([tag]) => tag);
+    setTags(sortedTags);
+  };
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
+  };
+
+  const handleQuestionPress = (questionId) => {
+    navigation.navigate('Question', { questionId });
   };
 
   return (
@@ -37,10 +61,21 @@ const FeedScreen = () => {
       <View style={styles.header}>
         <Text style={styles.title}>Descubra</Text>
         <View style={styles.tabs}>
-          <TouchableOpacity style={styles.tabSelected}><Text style={styles.tabTextSelected}>TUDO</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.tab}><Text style={styles.tabText}>FÍSICA</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.tab}><Text style={styles.tabText}>CÁLCULO</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.tab}><Text style={styles.tabText}>GEOMETRIA</Text></TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, !selectedTag && styles.tabSelected]} 
+            onPress={() => setSelectedTag(null)}
+          >
+            <Text style={[styles.tabText, !selectedTag && styles.tabTextSelected]}>TUDO</Text>
+          </TouchableOpacity>
+          {tags.map(tag => (
+            <TouchableOpacity 
+              key={tag} 
+              style={[styles.tab, selectedTag === tag && styles.tabSelected]} 
+              onPress={() => setSelectedTag(tag)}
+            >
+              <Text style={[styles.tabText, selectedTag === tag && styles.tabTextSelected]}>{tag}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
       <View style={styles.searchContainer}>
@@ -48,15 +83,16 @@ const FeedScreen = () => {
         <TouchableOpacity style={styles.filterButton}><Text>Filtrar</Text></TouchableOpacity>
       </View>
       <FlatList
-        data={data}
-        renderItem={({ item }) => <PostItem {...item} />}
-        keyExtractor={item => item.id}
+        data={questions}
+        renderItem={({ item }) => (
+          <PostItem
+            {...item}
+            onPress={() => handleQuestionPress(item.id)}
+          />
+        )}
+        keyExtractor={item => item.id.toString()}
+        contentContainerStyle={{ paddingBottom: 90 }}
       />
-      {/* <View style={styles.footer}>
-        <TouchableOpacity><Icon name="home" size={30} color="#000" /></TouchableOpacity>
-        <TouchableOpacity onPress={toggleModal}><Icon name="help-circle" size={30} color="#000" /></TouchableOpacity>
-        <TouchableOpacity><Icon name="person" size={30} color="#000" /></TouchableOpacity>
-      </View> */}
       <Modal
         transparent={true}
         visible={isModalVisible}
@@ -101,6 +137,7 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     marginTop: 10,
+    flexWrap: 'wrap',
   },
   tab: {
     paddingHorizontal: 10,
@@ -154,12 +191,20 @@ const styles = StyleSheet.create({
   postHeaderText: {
     marginLeft: 10,
   },
-  postMessage: {
-    fontSize:20,
+  postTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  postContent: {
+    fontSize: 16,
     marginTop: 10,
     color: '#333',
   },
-  postTag: {
+  postTags: {
+    marginTop: 5,
+    color: '#666',
+  },
+  postLikes: {
     marginTop: 5,
     color: '#666',
   },
@@ -171,14 +216,6 @@ const styles = StyleSheet.create({
   responseText: {
     marginLeft: 5,
     color: '#666',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 10,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
   },
   modalOverlay: {
     flex: 1,

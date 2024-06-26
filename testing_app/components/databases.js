@@ -171,15 +171,39 @@ export const getQuestion = async (id) => {
 export const getQuestionsByUser = async (user) => {
     console.log("Getting questions from %s", user);
     try {
-        const keys = await AsyncStorage.getAllKeys();
-        const questions = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('QUESTIONS:')))
-        const result = questions.map(([key, value]) => JSON.parse(value)).filter(question => question.user === user);
-        console.log(result);
-        return result;
+      const keys = await AsyncStorage.getAllKeys();
+      const questions = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('QUESTIONS:')));
+      const result = questions
+        .map(([key, value]) => JSON.parse(value))
+        .filter(question => question.user === user)
+        .sort((a, b) => new Date(b.time) - new Date(a.time)); // Ordenar por question.time
+      console.log(result);
+      return result;
     } catch (error) {
-        console.error('Failed to get questions by user', error);
-        return [];
+      console.error('Failed to get questions by user', error);
+      return [];
     }
+  };
+
+/** Gets all questions from the storage filtered by tag
+ * 
+ * 
+ * @returns questions = [{}]
+ */
+export const getAllQuestionsFilteredByTag = async (tag = null) => {
+try {
+    const keys = await AsyncStorage.getAllKeys();
+    const questions = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('QUESTIONS:')));
+    const result = questions
+    .map(([key, value]) => JSON.parse(value))
+    .filter(question => tag ? question.tags.includes(tag) : true)
+    .sort((a, b) => new Date(b.time) - new Date(a.time)); // Ordenar por question.time
+    console.log(result);
+    return result;
+} catch (error) {
+    console.error('Failed to get questions by tag', error);
+    return [];
+}
 };
 
 /** Sets the question in the storage
@@ -213,14 +237,43 @@ export const setQuestion = async (question) => {
  * @returns answers = [{}]
  */
 export const getAnswersByUser = async (user) => {
-    try {
-        const keys = await AsyncStorage.getAllKeys();
-        const answers = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('ANSWERS:')))
-        return answers.map(([key, value]) => JSON.parse(value)).filter(answer => answer.user === user);
-    } catch (error) {
-        console.error('Failed to get answers by user', error);
-        return [];
-    }
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const answers = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('ANSWERS:')));
+    const result = answers
+      .map(([key, value]) => JSON.parse(value))
+      .filter(answer => answer.user === user)
+      .sort((a, b) => new Date(b.time) - new Date(a.time)); // Ordenar por answer.time
+    console.log(result);
+    return result;
+  } catch (error) {
+    console.error('Failed to get answers by user', error);
+    return [];
+  }
+};
+
+/** 
+ * Gets all answers for a specific question from the storage
+ * 
+ * @param {number} questionId - The ID of the question
+ * @returns {Promise<Array>} - The list of answers for the question
+ */
+export const getAnswersByQuestion = async (questionId) => {
+  console.log("Getting answers for question %s", questionId);
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const answers = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('ANSWERS:')));
+    console.log("All answers: %s", answers);
+    const result = answers
+      .map(([key, value]) => JSON.parse(value))
+      .filter(answer => answer.question === questionId)
+      .sort((a, b) => new Date(b.time) - new Date(a.time)); // Ordenar por answer.time
+    console.log(result);
+    return result;
+  } catch (error) {
+    console.error('Failed to get answers by question', error);
+    return [];
+  }
 };
 
 /** Gets the answer from the storage
