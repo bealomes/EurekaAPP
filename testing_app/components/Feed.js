@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, RefreshControl } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, RefreshControl, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { getAllQuestionsFilteredByTag } from './databases';
 import { useFocusEffect } from '@react-navigation/native';
@@ -77,7 +77,7 @@ const FeedScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Descubra</Text>
-        <View style={styles.tabs}>
+        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.tabs}>
           <TouchableOpacity
             style={[styles.tab, !selectedTag && styles.tabSelected]}
             onPress={() => setSelectedTag(null)}
@@ -93,7 +93,7 @@ const FeedScreen = ({ navigation }) => {
               <Text style={[styles.tabText, selectedTag === tag && styles.tabTextSelected]}>{tag}</Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
       </View>
       <View style={styles.searchContainer}>
         <TextInput
@@ -164,7 +164,6 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     marginTop: 10,
-    flexWrap: 'wrap',
   },
   tab: {
     paddingHorizontal: 10,
