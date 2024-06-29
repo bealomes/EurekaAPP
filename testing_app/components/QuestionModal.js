@@ -17,9 +17,13 @@ const QuestionModal = ({ isVisible, onClose }) => {
       return;
     }
 
+    //time formatted as: "YYYY-MM-DD-HH-MM-SS"
+    let date = new Date();
+    let time = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds();
+
     const newQuestion = {
       user: loggedUser.email,
-      time: new Date().toISOString(),
+      time: time,
       title,
       content,
       tags: tags.split(',').map(tag => tag.trim()),
