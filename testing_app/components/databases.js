@@ -169,7 +169,6 @@ export const getQuestion = async (id) => {
  * @returns questions = [{}]
  */
 export const getQuestionsByUser = async (user) => {
-    console.log("Getting questions from %s", user);
     try {
       const keys = await AsyncStorage.getAllKeys();
       const questions = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('QUESTIONS:')));
@@ -177,7 +176,6 @@ export const getQuestionsByUser = async (user) => {
         .map(([key, value]) => JSON.parse(value))
         .filter(question => question.user === user)
         .sort((a, b) => new Date(b.time) - new Date(a.time)); // Ordenar por question.time
-      console.log(result);
       return result;
     } catch (error) {
       console.error('Failed to get questions by user', error);
@@ -198,7 +196,6 @@ try {
     .map(([key, value]) => JSON.parse(value))
     .filter(question => tag ? question.tags.includes(tag) : true)
     .sort((a, b) => new Date(b.time) - new Date(a.time)); // Ordenar por question.time
-    console.log(result);
     return result;
 } catch (error) {
     console.error('Failed to get questions by tag', error);
@@ -229,6 +226,14 @@ export const setQuestion = async (question) => {
   }
 };
 
+export const updateQuestion = async (question) => {
+    try {
+        await AsyncStorage.setItem(`QUESTIONS:${question.id}`, JSON.stringify(question));
+    } catch (error) {
+        console.error('Failed to update question', error);
+    }
+};
+
 //!RESPOSTAS
 
 /** Get all answers from an user
@@ -244,7 +249,6 @@ export const getAnswersByUser = async (user) => {
       .map(([key, value]) => JSON.parse(value))
       .filter(answer => answer.user === user)
       .sort((a, b) => new Date(b.time) - new Date(a.time)); // Ordenar por answer.time
-    console.log(result);
     return result;
   } catch (error) {
     console.error('Failed to get answers by user', error);
@@ -259,16 +263,13 @@ export const getAnswersByUser = async (user) => {
  * @returns {Promise<Array>} - The list of answers for the question
  */
 export const getAnswersByQuestion = async (questionId) => {
-  console.log("Getting answers for question %s", questionId);
   try {
     const keys = await AsyncStorage.getAllKeys();
     const answers = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('ANSWERS:')));
-    console.log("All answers: %s", answers);
     const result = answers
       .map(([key, value]) => JSON.parse(value))
       .filter(answer => answer.question === questionId)
       .sort((a, b) => new Date(b.time) - new Date(a.time)); // Ordenar por answer.time
-    console.log(result);
     return result;
   } catch (error) {
     console.error('Failed to get answers by question', error);
@@ -331,8 +332,14 @@ export const setAnswer = async (answer) => {
  */
 export const getQuestionLikes = async (id) => {
   try {
-    const likes = await AsyncStorage.getItem(`LIKES:QUESTIONS:${id}`);
-    return likes ? JSON.parse(likes) : null;
+    const keys = await AsyncStorage.getAllKeys();
+    const likes = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('LIKES:QUESTIONS:')));
+    console.log("All likes:");
+    console.log(likes);
+    const result = likes
+      .map(([key, value]) => JSON.parse(value))
+      .filter(like => like.question == id);
+    return result;
   } catch (error) {
     console.error('Failed to get question likes', error);
     return null;
@@ -347,10 +354,32 @@ export const getQuestionLikes = async (id) => {
  * }
  * @returns question like ID
  */
-export const setQuestionLikes = async (likes) => {
+export const setQuestionLikes = async (likes, add) => {
   try {
-    const id = await incrementId('LIKES:ID:QUESTIONS');
-    await AsyncStorage.setItem(`LIKES:QUESTIONS:${id}`, JSON.stringify({ id, ...likes }));
+    let id;
+    const question = await getQuestion(likes.question);
+    if(add){
+      const new_id = await incrementId('LIKES:ID:QUESTIONS');
+      id = new_id;
+      const like = {
+        id: new_id,
+        question: likes.question,
+        user: likes.user
+      };
+      await AsyncStorage.setItem(`LIKES:QUESTIONS:${id}`, JSON.stringify(like));
+
+      if(!question.likes) question.likes = 0;
+      question.likes++;
+    }else{
+      await AsyncStorage.removeItem(`LIKES:QUESTIONS:${likes.id}`);
+      id = likes.id;
+
+      question.likes--;
+      if(question.likes < 0) question.likes = 0;
+    }
+
+    await updateQuestion(question);
+
     return id;
   } catch (error) {
     console.error('Failed to set question likes', error);
