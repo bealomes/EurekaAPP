@@ -44,12 +44,18 @@ const LoginScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>{'<'}</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => {
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            }
+          }}
+        >
+          <Text style={styles.backButtonText}>{' < '}</Text>
         </TouchableOpacity>
         <Image source={icon} style={styles.lightBulb} />
       </View>
-
       <Text style={styles.title}>Login</Text>
 
       <Text style={styles.label}>Email</Text>

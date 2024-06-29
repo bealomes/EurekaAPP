@@ -80,7 +80,7 @@ const ProfileScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={logout}>
-          <Text style={styles.backButtonText}>{'<'}</Text>
+          <Text style={styles.backButtonText}>{' < '}</Text>
         </TouchableOpacity>
         <Image source={icon} style={styles.editButton} />
       </View>

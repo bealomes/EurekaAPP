@@ -188,20 +188,23 @@ export const getQuestionsByUser = async (user) => {
  * 
  * @returns questions = [{}]
  */
-export const getAllQuestionsFilteredByTag = async (tag = null) => {
-try {
+export const getAllQuestionsFilteredByTag = async (tag) => {
+  try {
     const keys = await AsyncStorage.getAllKeys();
     const questions = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('QUESTIONS:')));
-    const result = questions
-    .map(([key, value]) => JSON.parse(value))
-    .filter(question => tag ? question.tags.includes(tag) : true)
-    .sort((a, b) => new Date(b.time) - new Date(a.time)); // Ordenar por question.time
-    return result;
-} catch (error) {
+    let filteredQuestions = questions.map(([key, value]) => JSON.parse(value)).filter(question => question && question.time);
+
+    if (tag) {
+      filteredQuestions = filteredQuestions.filter(question => question.tags.includes(tag));
+    }
+
+    return filteredQuestions.sort((a, b) => new Date(b.time) - new Date(a.time));
+  } catch (error) {
     console.error('Failed to get questions by tag', error);
     return [];
-}
+  }
 };
+
 
 /** Sets the question in the storage
  * 
