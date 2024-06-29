@@ -48,46 +48,30 @@ const QuestionScreen = ({ route, navigation }) => {
 
   const toggleQuestionLike = async () => {
     const userLike = await getQuestionLikes(questionId.toString());
-    console.log("Question likes: ");
-    console.log(userLike);
-
     const userHasLiked = userLike && userLike.some(like => like.user === user.email);
-
-    console.log("User %s has liked: %s", user.email, userHasLiked);
-    const quest = await getQuestion(questionId);
-    console.log("Current question");
-    console.log(quest);
     
     if (userHasLiked) {
-        console.log("Removing like");
         const updatedLikes = userLike.find(like => like.user === user.email);
-        console.log("Updated likes: ");
-        console.log(updatedLikes);
         await setQuestionLikes(updatedLikes, false);
     } else {
-        console.log("Adding like");
         const newLike = { question: questionId, user: user.email };
         await setQuestionLikes(newLike, true);
     }
-    
-    const question = await getQuestion(questionId);
-    console.log("Current likes after change: %s", await question.likes);
 
     fetchQuestionAndAnswers();
   };
 
   const toggleAnswerLike = async (answerId) => {
-    const userLike = await getAnswerLikes(answerId);
+    const userLike = await getAnswerLikes(answerId.toString());
+    console.log(userLike);
     const userHasLiked = userLike && userLike.some(like => like.user === user.email);
 
     if (userHasLiked) {
-      // Remove like
-      const updatedLikes = userLike.filter(like => like.user !== user.email);
-      await AsyncStorage.setItem(`LIKES:ANSWERS:${answerId}`, JSON.stringify(updatedLikes));
+      const updatedLikes = userLike.find(like => like.user === user.email);
+      await setAnswerLikes(updatedLikes, false);
     } else {
-      // Add like
       const newLike = { answer: answerId, user: user.email };
-      await setAnswerLikes(newLike);
+      await setAnswerLikes(newLike, true);
     }
 
     fetchQuestionAndAnswers();

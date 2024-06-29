@@ -320,6 +320,14 @@ export const setAnswer = async (answer) => {
   }
 };
 
+export const updateAnswer = async (answer) => {
+  try {
+      await AsyncStorage.setItem(`ANSWERS:${answer.id}`, JSON.stringify(answer));
+  } catch (error) {
+      console.error('Failed to update answer', error);
+  }
+};
+
 //!CURTIDAS_PERGUNTAS
 
 /** Gets the question likes from the storage
@@ -334,8 +342,6 @@ export const getQuestionLikes = async (id) => {
   try {
     const keys = await AsyncStorage.getAllKeys();
     const likes = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('LIKES:QUESTIONS:')));
-    console.log("All likes:");
-    console.log(likes);
     const result = likes
       .map(([key, value]) => JSON.parse(value))
       .filter(like => like.question == id);
@@ -398,8 +404,12 @@ export const setQuestionLikes = async (likes, add) => {
  */
 export const getAnswerLikes = async (id) => {
   try {
-    const likes = await AsyncStorage.getItem(`LIKES:ANSWERS:${id}`);
-    return likes ? JSON.parse(likes) : null;
+    const keys = await AsyncStorage.getAllKeys();
+    const likes = await AsyncStorage.multiGet(keys.filter(key => key.startsWith('LIKES:ANSWERS:')));
+    const result = likes
+      .map(([key, value]) => JSON.parse(value))
+      .filter(like => like.answer == id);
+    return result;
   } catch (error) {
     console.error('Failed to get answer likes', error);
     return null;
@@ -414,10 +424,32 @@ export const getAnswerLikes = async (id) => {
  * }
  * @returns answer like ID
  */
-export const setAnswerLikes = async (likes) => {
+export const setAnswerLikes = async (likes, add) => {
   try {
-    const id = await incrementId('LIKES:ID:ANSWERS');
-    await AsyncStorage.setItem(`LIKES:ANSWERS:${id}`, JSON.stringify({ id, ...likes }));
+    let id;
+    const answer = await getAnswer(likes.answer);
+    if(add){
+      const new_id = await incrementId('LIKES:ID:ANSWERS');
+      id = new_id;
+      const like = {
+        id: new_id,
+        answer: likes.answer,
+        user: likes.user
+      };
+      await AsyncStorage.setItem(`LIKES:ANSWERS:${id}`, JSON.stringify(like));
+
+      if(!answer.likes) answer.likes = 0;
+      answer.likes++;
+    }else{
+      await AsyncStorage.removeItem(`LIKES:ANSWERS:${likes.id}`);
+      id = likes.id;
+
+      answer.likes--;
+      if(answer.likes < 0) answer.likes = 0;
+    }
+
+    await updateAnswer(answer);
+
     return id;
   } catch (error) {
     console.error('Failed to set answer likes', error);
