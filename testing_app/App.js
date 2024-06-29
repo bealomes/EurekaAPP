@@ -6,19 +6,16 @@ import Login from './components/Login';
 import Cadastro from './components/Cadastro';
 import Profile from './components/Profile';
 import Question from './components/QuestionScreen'
-import { fill_database } from './components/databasefiller';
 import TabNavigator from './components/TabNavigator';
+import LoadingScreen from './components/LoadingScreen';
 
 const Stack = createNativeStackNavigator();
 
 function App() {
-
-  fill_database();
-
-
   return (
     <NavigationContainer>
       <Stack.Navigator>
+        <Stack.Screen name="Loading" component={LoadingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
         <Stack.Screen name="Cadastro" component={Cadastro} options={{ headerShown: false }} />
         <Stack.Screen name="Feed" component={TabNavigator} options={{ headerShown: false }} />

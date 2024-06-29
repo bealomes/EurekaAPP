@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, RefreshControl, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { getAllQuestionsFilteredByTag, getAnswersByQuestion } from './databases';
+import { getAllQuestionsFilteredByTag } from './databases';
+import { useFocusEffect } from '@react-navigation/native';
 
 const PostItem = ({ user, time, title, content, tags, likes, onPress }) => (
   <TouchableOpacity style={styles.postContainer} onPress={onPress}>
@@ -23,26 +24,33 @@ const FeedScreen = ({ navigation }) => {
   const [questions, setQuestions] = useState([]);
   const [tags, setTags] = useState([]);
   const [selectedTag, setSelectedTag] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchQuestions();
-  }, [selectedTag]);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchQuestions();
+    }, [selectedTag])
+  );
 
   const fetchQuestions = async () => {
     const questions = await getAllQuestionsFilteredByTag(selectedTag);
-    setQuestions(questions);
+    const validQuestions = questions.filter(question => question && question.time);
+    setQuestions(validQuestions);
     if (!selectedTag) {
-      extractTags(questions);
+      extractTags(validQuestions);
     }
   };
 
   const extractTags = (questions) => {
     const tagCounts = {};
     questions.forEach(question => {
-      question.tags.forEach(tag => {
-        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-      });
+      if (question && question.tags) {
+        question.tags.forEach(tag => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+      }
     });
     const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).map(([tag]) => tag);
     setTags(sortedTags);
@@ -56,34 +64,47 @@ const FeedScreen = ({ navigation }) => {
     navigation.navigate('Question', { questionId });
   };
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchQuestions().then(() => setRefreshing(false));
+  };
+
+  const filteredQuestions = questions.filter(question =>
+    question.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Descubra</Text>
-        <View style={styles.tabs}>
-          <TouchableOpacity 
-            style={[styles.tab, !selectedTag && styles.tabSelected]} 
+        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.tabs}>
+          <TouchableOpacity
+            style={[styles.tab, !selectedTag && styles.tabSelected]}
             onPress={() => setSelectedTag(null)}
           >
             <Text style={[styles.tabText, !selectedTag && styles.tabTextSelected]}>TUDO</Text>
           </TouchableOpacity>
           {tags.map(tag => (
-            <TouchableOpacity 
-              key={tag} 
-              style={[styles.tab, selectedTag === tag && styles.tabSelected]} 
+            <TouchableOpacity
+              key={tag}
+              style={[styles.tab, selectedTag === tag && styles.tabSelected]}
               onPress={() => setSelectedTag(tag)}
             >
               <Text style={[styles.tabText, selectedTag === tag && styles.tabTextSelected]}>{tag}</Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
       </View>
       <View style={styles.searchContainer}>
-        <TextInput style={styles.searchInput} placeholder="Qual a sua pergunta?" />
-        <TouchableOpacity style={styles.filterButton}><Text>Filtrar</Text></TouchableOpacity>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Qual a sua pergunta?"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
       </View>
       <FlatList
-        data={questions}
+        data={filteredQuestions}
         renderItem={({ item }) => (
           <PostItem
             {...item}
@@ -92,6 +113,12 @@ const FeedScreen = ({ navigation }) => {
         )}
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 90 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
       />
       <Modal
         transparent={true}
@@ -101,7 +128,7 @@ const FeedScreen = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
-              <Icon name="close" size={24} color="#000" />
+              <Icon name="close" size={24} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Faça sua pergunta!</Text>
             <TextInput
@@ -137,7 +164,6 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     marginTop: 10,
-    flexWrap: 'wrap',
   },
   tab: {
     paddingHorizontal: 10,
@@ -219,13 +245,13 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 255, 0.5)',
+    backgroundColor: 'rgba(93, 64, 216, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
     width: '80%',
-    backgroundColor: '#fff',
+    backgroundColor: '#6D28D9',
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
@@ -236,11 +262,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#fff',
     marginBottom: 20,
   },
   textInput: {
     width: '100%',
-    height: 100,
     backgroundColor: '#F0F0F0',
     borderRadius: 10,
     padding: 10,

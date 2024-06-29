@@ -17,9 +17,7 @@ const ProfileScreen = ({ navigation }) => {
         if (userData) {
           setUser(userData);
           const userQuestions = await getQuestionsByUser(userData.email);
-          console.log(userQuestions);
           const userAnswers = await getAnswersByUser(userData.email);
-          console.log(userAnswers);
 
           const detailedAnswers = await Promise.all(userAnswers.map(async (answer) => {
             const question = await getQuestion(answer.question);
@@ -74,7 +72,6 @@ const ProfileScreen = ({ navigation }) => {
   );
 
   const logout = async () => {
-    console.log("trying to logout");
     await removeLoggedUser();
     navigation.navigate('Login');
   };
@@ -83,7 +80,7 @@ const ProfileScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={logout}>
-          <Text style={styles.backButtonText}>{'<'}</Text>
+          <Text style={styles.backButtonText}>{' < '}</Text>
         </TouchableOpacity>
         <Image source={icon} style={styles.editButton} />
       </View>

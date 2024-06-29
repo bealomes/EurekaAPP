@@ -58,7 +58,7 @@ const RegisterScreen = ({ navigation }) => {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>{'<'}</Text>
+          <Text style={styles.backButtonText}>{' < '}</Text>
         </TouchableOpacity>
         <Image source={icon} style={styles.lightBulb} />
       </View>

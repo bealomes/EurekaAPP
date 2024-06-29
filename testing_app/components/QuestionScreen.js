@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { getQuestion, getAnswersByQuestion, getQuestionLikes, setQuestionLikes, getAnswerLikes, setAnswerLikes, getLoggedUser } from './databases';
+import { getQuestion, getAnswersByQuestion, getQuestionLikes, setQuestionLikes, getAnswerLikes, setAnswerLikes, getLoggedUser, setAnswer } from './databases';
 
 const AnswerItem = ({ user, time, content, likes, onLike }) => (
   <View style={styles.postContainer}>
@@ -26,6 +26,7 @@ const QuestionScreen = ({ route, navigation }) => {
   const [answers, setAnswers] = useState([]);
   const [likes, setLikes] = useState(0);
   const [user, setUser] = useState(null);
+  const [newAnswer, setNewAnswer] = useState('');
 
   useEffect(() => {
     fetchQuestionAndAnswers();
@@ -40,43 +41,58 @@ const QuestionScreen = ({ route, navigation }) => {
   const fetchQuestionAndAnswers = async () => {
     const fetchedQuestion = await getQuestion(questionId);
     const fetchedAnswers = await getAnswersByQuestion(questionId.toString());
-    const questionLikes = await getQuestionLikes(questionId);
+    const questionLikes = await getQuestionLikes(questionId.toString());
     setQuestion(fetchedQuestion);
     setAnswers(fetchedAnswers.sort((a, b) => b.likes - a.likes));
     setLikes(questionLikes ? questionLikes.length : 0);
   };
 
   const toggleQuestionLike = async () => {
-    const userLike = await getQuestionLikes(questionId);
+    const userLike = await getQuestionLikes(questionId.toString());
     const userHasLiked = userLike && userLike.some(like => like.user === user.email);
-
+    
     if (userHasLiked) {
-      // Remove like
-      const updatedLikes = userLike.filter(like => like.user !== user.email);
-      await AsyncStorage.setItem(`LIKES:QUESTIONS:${questionId}`, JSON.stringify(updatedLikes));
+      const updatedLikes = userLike.find(like => like.user === user.email);
+      await setQuestionLikes(updatedLikes, false);
     } else {
-      // Add like
       const newLike = { question: questionId, user: user.email };
-      await setQuestionLikes(newLike);
+      await setQuestionLikes(newLike, true);
     }
 
     fetchQuestionAndAnswers();
   };
 
   const toggleAnswerLike = async (answerId) => {
-    const userLike = await getAnswerLikes(answerId);
+    const userLike = await getAnswerLikes(answerId.toString());
     const userHasLiked = userLike && userLike.some(like => like.user === user.email);
 
     if (userHasLiked) {
-      // Remove like
-      const updatedLikes = userLike.filter(like => like.user !== user.email);
-      await AsyncStorage.setItem(`LIKES:ANSWERS:${answerId}`, JSON.stringify(updatedLikes));
+      const updatedLikes = userLike.find(like => like.user === user.email);
+      await setAnswerLikes(updatedLikes, false);
     } else {
-      // Add like
       const newLike = { answer: answerId, user: user.email };
-      await setAnswerLikes(newLike);
+      await setAnswerLikes(newLike, true);
     }
 
+    fetchQuestionAndAnswers();
+  };
+
+  const handleAnswerSubmit = async () => {
+    if (newAnswer.trim() === '') return;
+    
+    let date = new Date();
+    let time = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getHours() + "-" + date.getMinutes() + "-" + date.getSeconds();
+
+    const answer = {
+      question: questionId.toString(),
+      user: user.email,
+      time: time,
+      content: newAnswer,
+      likes: 0,
+    };
+
+    await setAnswer(answer);
+    setNewAnswer('');
     fetchQuestionAndAnswers();
   };
 
@@ -121,6 +137,18 @@ const QuestionScreen = ({ route, navigation }) => {
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 90 }}
       />
+      <View style={styles.answerInputContainer}>
+        <TextInput
+          style={styles.answerInput}
+          placeholder="Digite sua resposta..."
+          value={newAnswer}
+          onChangeText={setNewAnswer}
+          multiline
+        />
+        <TouchableOpacity style={styles.submitButton} onPress={handleAnswerSubmit}>
+          <Text style={styles.submitButtonText}>Responder</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -188,6 +216,31 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#ddd',
+  },
+  answerInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderTopWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
+  },
+  answerInput: {
+    flex: 1,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 10,
+    padding: 10,
+    marginRight: 10,
+  },
+  submitButton: {
+    backgroundColor: '#3B82F6',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 
