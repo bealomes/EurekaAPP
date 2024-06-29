@@ -419,6 +419,7 @@ export const getAnswerLikes = async (id) => {
 /** Sets the answer likes in the storage
  * 
  * @param {*} likes = {
+ *   id: '',
  *   answer: '',
  *   user: '',
  * }

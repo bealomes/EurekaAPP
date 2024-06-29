@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { getAllQuestionsFilteredByTag, getAnswersByQuestion } from './databases';
+import { useFocusEffect } from '@react-navigation/native';
 
 const PostItem = ({ user, time, title, content, tags, likes, onPress }) => (
   <TouchableOpacity style={styles.postContainer} onPress={onPress}>
@@ -23,11 +24,14 @@ const FeedScreen = ({ navigation }) => {
   const [questions, setQuestions] = useState([]);
   const [tags, setTags] = useState([]);
   const [selectedTag, setSelectedTag] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setModalVisible] = useState(false);
 
-  useEffect(() => {
-    fetchQuestions();
-  }, [selectedTag]);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchQuestions();
+    }, [selectedTag])
+  );
 
   const fetchQuestions = async () => {
     const questions = await getAllQuestionsFilteredByTag(selectedTag);
@@ -56,21 +60,25 @@ const FeedScreen = ({ navigation }) => {
     navigation.navigate('Question', { questionId });
   };
 
+  const filteredQuestions = questions.filter(question =>
+    question.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Descubra</Text>
         <View style={styles.tabs}>
-          <TouchableOpacity 
-            style={[styles.tab, !selectedTag && styles.tabSelected]} 
+          <TouchableOpacity
+            style={[styles.tab, !selectedTag && styles.tabSelected]}
             onPress={() => setSelectedTag(null)}
           >
             <Text style={[styles.tabText, !selectedTag && styles.tabTextSelected]}>TUDO</Text>
           </TouchableOpacity>
           {tags.map(tag => (
-            <TouchableOpacity 
-              key={tag} 
-              style={[styles.tab, selectedTag === tag && styles.tabSelected]} 
+            <TouchableOpacity
+              key={tag}
+              style={[styles.tab, selectedTag === tag && styles.tabSelected]}
               onPress={() => setSelectedTag(tag)}
             >
               <Text style={[styles.tabText, selectedTag === tag && styles.tabTextSelected]}>{tag}</Text>
@@ -79,11 +87,15 @@ const FeedScreen = ({ navigation }) => {
         </View>
       </View>
       <View style={styles.searchContainer}>
-        <TextInput style={styles.searchInput} placeholder="Qual a sua pergunta?" />
-        <TouchableOpacity style={styles.filterButton}><Text>Filtrar</Text></TouchableOpacity>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Qual a sua pergunta?"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
       </View>
       <FlatList
-        data={questions}
+        data={filteredQuestions}
         renderItem={({ item }) => (
           <PostItem
             {...item}
